@@ -9,6 +9,7 @@ const {
   userArts,
   show,
   edit,
+  like,
   remove,
 } = require("../app/controllers/art.controller");
 const convertToWebP = require("../app/middlewares/converter.middleware");
@@ -22,6 +23,9 @@ router.post(
   convertToWebP,
   create
 );
+
+router.post("/:slug", getUser, like);
+
 router.get("/", index);
 router.get("/:slug", show);
 router.put("/:slug", getUser, edit);

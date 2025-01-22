@@ -143,6 +143,45 @@ const show = async (req, res) => {
   }
 };
 
+const like = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const userId = req.user.id;
+
+    if (!slug) {
+      return res.status(400).json({
+        status: "error",
+        message: "slug is required.",
+      });
+    }
+    const art = await Art.findOne({ slug: slug });
+
+    if (!art) {
+      return res.status(404).json({
+        status: "error",
+        message: "Art not found.",
+      });
+    }
+
+    if (art.likedBy.includes(userId)) {
+        return res.status(400).send({ message: 'You have already liked this art' });
+    }
+
+    art.likedBy.push(userId);
+    await art.save();
+    res.status(200).send({
+            message: 'Art liked successfully',
+            likes: art.likedBy.length
+    });
+
+  } catch (e) {
+    return res.status(500).json({
+      status: "error",
+      message: "Something went wrong",
+    });
+  }
+};
+
 const create = async (req, res) => {
   try {
     let { title, description, theme } = await req.body;
@@ -308,4 +347,5 @@ module.exports = {
   create,
   edit,
   remove,
+  like,
 };
