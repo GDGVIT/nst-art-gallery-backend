@@ -12,6 +12,7 @@ const {
   like,
   remove,
   publish,
+  gallery,
 } = require("../app/controllers/art.controller");
 const convertToWebP = require("../app/middlewares/converter.middleware");
 
@@ -29,6 +30,8 @@ router.post("/:slug", getUser, like);
 router.post("/publish/:slug", getUser, publish);
 
 router.get("/", index);
+router.get("/gallery", gallery);
+
 router.get("/:slug", show);
 router.put("/:slug", getUser, edit);
 router.delete("/:slug", getUser, remove);

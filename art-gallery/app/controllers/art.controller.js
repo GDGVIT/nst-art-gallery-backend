@@ -33,6 +33,35 @@ const index = async (req, res) => {
   }
 };
 
+const gallery = async (req, res) => {
+  try {
+    let { page, limit } = req.query;
+    page = page || 1;
+    limit = limit || 10;
+    const count = await Art.countDocuments();
+
+    const arts = await Art.find({published: true})
+      .populate({ path: "artist", select: "id name" })
+      .populate("theme")
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Arts fetched successfully.",
+      arts: arts,
+      count: count,
+    });
+  } catch (e) {
+    console.log(e);
+
+    return res.status(500).json({
+      status: "error",
+      message: "Something went wrong",
+    });
+  }
+};
+
 const userArts = async (req, res) => {
   console.log("hi");
 
@@ -394,4 +423,5 @@ module.exports = {
   remove,
   like,
   publish,
+  gallery,
 };
