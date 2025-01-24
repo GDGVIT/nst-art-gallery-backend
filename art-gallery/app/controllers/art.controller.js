@@ -346,6 +346,44 @@ const remove = async (req, res) => {
   }
 };
 
+const publish = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    if (!slug) {
+      return res.status(400).json({
+        status: "error",
+        message: "Slug is required.",
+      });
+    }
+    const art = await Art.findOne({ slug });
+    if (!art) {
+      return res.status(404).json({
+        status: "error",
+        message: "Art not found.",
+      });
+    }
+    if (req.user.id !== art.artist.toString()) {
+      return res.status(403).json({
+        status: "error",
+        message: "You are not authorized to perform this action.",
+      });
+    }
+
+    art.published = !art.published;
+    await art.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Art published/unpublished successfully.",
+    });
+  } catch (e) {
+    return res.status(500).json({
+      status: "error",
+      message: "Something went wrong.",
+    });
+  }
+};
+
 module.exports = {
   index,
   userArts,
@@ -355,4 +393,5 @@ module.exports = {
   edit,
   remove,
   like,
+  publish,
 };

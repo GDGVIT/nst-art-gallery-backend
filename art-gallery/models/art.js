@@ -15,6 +15,10 @@ const ArtSchema = new Schema({
     type: Number,
     default: 0,
   },
+  published: {
+    type: Boolean,
+    default: false,
+  },
   slug: {
     type: String,
     required: true,
