@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const ThemeSchema = new Schema({
-  name: {
+  theme_title: {
     type: String,
     required: true,
     unique: true,
@@ -12,11 +12,23 @@ const ThemeSchema = new Schema({
     required: true,
     unique: true,
   },
-  image: {
+  theme_images: [{
+    type: String,
+    required: true,
+  }],
+  theme_description: {
     type: String,
     required: true,
   },
-  description: {
+  work_title: {
+    type: String,
+    required: true,
+  },
+  work_images: [{
+    type: String,
+    required: true,
+  }],
+  work_description: {
     type: String,
     required: true,
   },

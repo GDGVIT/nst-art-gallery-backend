@@ -57,39 +57,67 @@ const show = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { theme_title, theme_description, work_title, work_description } = req.body;
     let slug = slugify(name);
     let i = 0;
+
     while (await Theme.findOne({ slug: slug })) {
       slug = slugify(name, ++i);
     }
-    let image = "";
-    if (req.file) {
-      let oldFilename = req.file.filename;
+
+    if (!req.files || !Object.hasOwn(req.files, "theme_image") || !Object.hasOwn(req.files, "work_image")) {
+      return res.status(400).json({
+        status: "error",
+        message: "Image is required",
+      });
+    }
+
+    let theme_images = [];
+    for (img of req.files["theme_image"]) {
+      let image = "";
+
+      let oldFilename = img.filename;
       let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
       image = slug + "." + extension;
       fs.rename(
-        req.file.path,
-        req.file.destination + "/" + image,
+        img.path,
+        img.destination + "/" + image,
         function (err) {
           if (err) {
             throw new Error("Error renaming file. Error: " + err);
           }
         }
       );
-      image = "/images/theme/" + image;
-    } else {
-      return res.status(400).json({
-        status: "error",
-        message: "Image is required",
-      });
+      theme_images.push("/images/theme/" + image);
     }
+
+    let work_images = [];
+    for (img of req.files["work_image"]) {
+      let image = "";
+
+      let oldFilename = img.filename;
+      let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
+      image = slug + "." + extension;
+      fs.rename(
+        img.path,
+        img.destination + "/" + image,
+        function (err) {
+          if (err) {
+            throw new Error("Error renaming file. Error: " + err);
+          }
+        }
+      );
+      work_images.push("/images/theme/" + image);
+    }
+
     const theme = await Theme.create({
-      name,
-      description,
       slug,
-      image,
-      description,
+      theme_title,
+      theme_description,
+      theme_images,
+      work_images,
+      work_description,
+      work_title
     });
     return res.status(200).json({
       status: "success",
@@ -109,7 +137,7 @@ const create = async (req, res) => {
 const edit = async (req, res) => {
   try {
     const { slug } = req.params;
-    const { name, description } = req.body;
+    const { theme_title, theme_description, work_title, work_description } = req.body;
     let theme = await Theme.findOne({ slug });
     if (!theme) {
       return res
@@ -117,29 +145,62 @@ const edit = async (req, res) => {
         .json({ status: "error", message: "Theme not found" });
     }
 
-    if (name) {
-      theme.name = name;
+    if (theme_title) {
+      theme.theme_title = theme_title;
     }
-    if (description) {
-      theme.description = description;
+    if (theme_description) {
+      theme.theme_description = theme_description;
+    }
+    if (work_title) {
+      theme.work_title = work_title;
+    }
+    if (work_description) {
+      theme.work_description = work_description;
     }
 
-    if (req.file) {
-      let oldFilename = req.file.filename;
-      let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
-      let image = slug + "." + extension;
-      fs.rename(
-        req.file.path,
-        req.file.destination + "/" + image,
-        function (err) {
-          if (err) {
-            return res
-              .status(500)
-              .json({ status: "error", message: "File rename error" });
+    if (req.files && Object.hasOwn(req.files, 'theme_image')) {
+      let theme_images = [];
+      for (file of req.files["theme_image"]) {
+        let oldFilename = file.filename;
+        let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
+        let image = slug + "." + extension;
+        fs.rename(
+          file.path,
+          file.destination + "/" + image,
+          function (err) {
+            if (err) {
+              return res
+                .status(500)
+                .json({ status: "error", message: "File rename error" });
+            }
           }
-        }
-      );
-      theme.image = image;
+        );
+        theme_images.push(image);
+      }
+      theme.theme_images = theme_images;
+    }
+
+    if (req.files && Object.hasOwn(req.files, 'work_image')) {
+      let work_images = [];
+
+      for (file of req.files["work_image"]) {
+        let oldFilename = file.filename;
+        let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
+        let image = slug + "." + extension;
+        fs.rename(
+          file.path,
+          file.destination + "/" + image,
+          function (err) {
+            if (err) {
+              return res
+                .status(500)
+                .json({ status: "error", message: "File rename error" });
+            }
+          }
+        );
+        work_images.push(image);
+      }
+      theme.work_images = work_images;
     }
 
     await theme.save();

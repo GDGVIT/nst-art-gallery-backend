@@ -18,7 +18,10 @@ router.post(
   "/create",
   verify,
   setPath,
-  uploader.single("image"),
+  uploader.fields([
+    { name: "theme_image", maxCount: 4 },
+    { name: "work_image", maxCount: 2 },
+  ]),
   convertToWebP,
   create
 );
@@ -26,7 +29,10 @@ router.put(
   "/:slug",
   verify,
   setPath,
-  uploader.single("image"),
+  uploader.fields([
+    { name: "theme_image", maxCount: 4 },
+    { name: "work_image", maxCount: 2 },
+  ]),
   convertToWebP,
   edit
 );
