@@ -154,7 +154,7 @@ const like = async (req, res) => {
         message: "slug is required.",
       });
     }
-    const art = await Art.findOne({ slug: slug });
+    const art = await Art.findOne({ slug: slug }).select('+likedBy');
 
     if (!art) {
       return res.status(404).json({
@@ -164,15 +164,22 @@ const like = async (req, res) => {
     }
 
     if (art.likedBy.includes(userId)) {
-        return res.status(400).send({ message: 'You have already liked this art' });
+      art.likedBy = art.likedBy.filter(id => id.toString() !== userId);
+      art.likes = art.likedBy.length;
+      await art.save();
+      res.status(200).send({
+        message: 'Art unliked successfully',
+          likes: art.likes,
+      });
+    } else {
+      art.likedBy.push(userId);
+      art.likes = art.likedBy.length;
+      await art.save();
+      res.status(200).send({
+        message: 'Art liked successfully',
+        likes: art.likes,
+      });
     }
-
-    art.likedBy.push(userId);
-    await art.save();
-    res.status(200).send({
-            message: 'Art liked successfully',
-            likes: art.likedBy.length
-    });
 
   } catch (e) {
     return res.status(500).json({
