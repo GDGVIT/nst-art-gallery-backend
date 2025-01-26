@@ -26,7 +26,7 @@ router.post(
   create
 );
 
-router.post("/:slug", getUser, like);
+router.post("/like/:slug", getUser, like);
 router.post("/publish/:slug", getUser, publish);
 
 router.get("/", index);
