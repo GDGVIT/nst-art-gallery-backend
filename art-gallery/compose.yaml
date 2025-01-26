@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+    volumes:
+      - ./public/uploads:/app/public/uploads
+      - ./public/placeholders:/app/public/placeholders
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env

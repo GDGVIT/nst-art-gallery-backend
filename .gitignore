@@ -190,5 +190,8 @@ dist
 
 # SvelteKit build / generate output
 .svelte-kit
+venv
+test.py
+panda.csv
+./package-lock.json
 
-# End of https://www.toptal.com/developers/gitignore/api/macos,node,git
