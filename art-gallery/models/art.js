@@ -6,6 +6,19 @@ const ArtSchema = new Schema({
     type: String,
     required: true,
   },
+  likedBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    select: false,
+  }],
+  likes: {
+    type: Number,
+    default: 0,
+  },
+  published: {
+    type: Boolean,
+    default: false,
+  },
   slug: {
     type: String,
     required: true,
