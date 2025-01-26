@@ -3,6 +3,7 @@ const Theme = require("../../models/theme");
 const User = require("../../models/user");
 const fs = require("fs");
 const slugify = require("../utils/slugify");
+const stylizeImages = require("../utils/style-transfer");
 
 const index = async (req, res) => {
   try {
@@ -218,6 +219,30 @@ const like = async (req, res) => {
   }
 };
 
+const model = async (req, res) => {
+  try {
+    if (!req.files || !Object.hasOwn(req.files, "content_image") || !Object.hasOwn(req.files, "style_image")) {
+      return res.status(400).json({
+        status: "error",
+        message: "Image is required.",
+      });
+    }
+
+    const styled_image = await stylizeImages(req.files["content_image"][0], req.files["style_image"][0]);
+
+    res.set('Content-Type', 'image/jpeg');
+    res.status(201).send(styled_image);
+
+  } catch (e) {
+    console.log(e);
+
+    return res.status(500).json({
+      status: "error",
+      message: "Something went wrong.",
+    });
+  }
+}
+
 const create = async (req, res) => {
   try {
     let { title, description, theme } = await req.body;
@@ -424,4 +449,5 @@ module.exports = {
   like,
   publish,
   gallery,
+  model,
 };
