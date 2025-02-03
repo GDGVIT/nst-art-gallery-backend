@@ -26,7 +26,8 @@ async function stylizeImages(contentImagePath, styleImagePath) {
   const styleImage = await resizeStyleImage(styleImagePath);
 
   // Load the style transfer model
-  const modelPath = path.resolve(__dirname, "../arbitrary-image-stylization-v1-tensorflow1-256-v2");
+  const modelPath = path.resolve(__dirname, "./arbitrary-image-stylization-v1-tensorflow1-256-v2");
+
   const styleTransferModel = await tf.node.loadSavedModel(modelPath);
 
   // Stylize the image
