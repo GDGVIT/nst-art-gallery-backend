@@ -33,15 +33,15 @@ const ThemeSchema = new Schema({
     required: true,
   },
   history: [{
-      src: String,
-      artist: {
-        name: String,
-        period: String,
-      },
-      art: {
-        title: String,
-        year: String,
-      }
+    src: String,
+    artist: {
+      name: String,
+      period: String,
+    },
+    art: {
+      title: String,
+      year: String,
+    }
   }]
 });
 
