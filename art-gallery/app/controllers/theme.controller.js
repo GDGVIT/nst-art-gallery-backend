@@ -20,6 +20,95 @@ const index = async (req, res) => {
   }
 };
 
+const themeOfDay = async (req, res) => {
+    try {
+        const themes = await Theme.find();
+        const idx = new Date().getDate() % themes.length;
+
+        return res.status(200).json({
+          status: "success",
+          theme: themes[idx],
+        });
+    } catch (e) {
+        return res.status(500).json({
+            status: "error",
+            message: "Something went wrong.",
+        });
+    }
+}
+
+const addHistory = async (req, res) => {
+    try {
+
+        const slug = req.params.slug;
+        if (!slug) {
+            return res.status(400).json({
+                status: "error",
+                message: "Slug is required",
+            });
+        }
+
+        const { artist, art } = req.body;
+
+        if (!artist || !art) {
+          return res.status(404).json({
+            status: "error",
+            message: "artist and art is required",
+          });
+        }
+
+        let image = "";
+
+        if (req.file) {
+          let oldFilename = req.file.filename;
+          let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
+          image = slug + "." + extension;
+
+          fs.rename(
+            req.file.path,
+            req.file.destination + "/" + image,
+            function (err) {
+              if (err) {
+                throw new Error("Error renaming file. Error: " + err);
+              }
+            });
+          image = "/images/theme/" + image;
+
+        } else {
+          return res.status(400).json({
+            status: "error",
+            message: "Image is required"
+          });
+        }
+
+        const theme = await Theme.findOne({ slug });
+        if (!theme) {
+          return res.status(404).json({
+            status: "error",
+            message: "Theme not found.",
+          });
+        }
+
+        const historyEntry = {
+          src: image,
+          artist: JSON.parse(artist),
+          art: JSON.parse(art),
+        };
+        console.log(historyEntry);
+
+        theme.history.push(historyEntry);
+        await theme.save();
+
+        return res.status(201).json(theme);
+    } catch (e) {
+        console.log(e)
+        return res.status(500).json({
+            status: "error",
+            message: "Something went wrong.",
+        });
+    }
+}
+
 const show = async (req, res) => {
   try {
     const slug = req.params.slug;
@@ -244,4 +333,4 @@ const destroy = async (req, res) => {
 };
 // TODO: Select a random theme for theme of the day
 
-module.exports = { index, show, create, edit, destroy };
+module.exports = { index, show, create, edit, destroy, themeOfDay, addHistory };

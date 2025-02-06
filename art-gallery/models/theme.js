@@ -32,6 +32,17 @@ const ThemeSchema = new Schema({
     type: String,
     required: true,
   },
+  history: [{
+      src: String,
+      artist: {
+        name: String,
+        period: String,
+      },
+      art: {
+        title: String,
+        year: String,
+      }
+  }]
 });
 
 const Theme = mongoose.model("Theme", ThemeSchema);
