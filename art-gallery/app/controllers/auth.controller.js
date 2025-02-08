@@ -85,6 +85,7 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         image: user.image,
+        id: user.id,
       },
     });
   } catch (e) {
