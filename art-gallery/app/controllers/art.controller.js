@@ -2,6 +2,7 @@ const Art = require("../../models/art");
 const Theme = require("../../models/theme");
 const User = require("../../models/user");
 const fs = require("fs");
+const path = require('path'); // Add this line
 const slugify = require("../utils/slugify");
 const stylizeImages = require("../utils/style-transfer");
 
@@ -18,6 +19,7 @@ const index = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
+    res.set('Content-Type', 'application/json');
     return res.status(200).json({
       status: "success",
       message: "Arts fetched successfully.",
@@ -47,6 +49,7 @@ const gallery = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
+    res.set('Content-Type', 'application/json');
     return res.status(200).json({
       status: "success",
       message: "Arts fetched successfully.",
@@ -90,6 +93,8 @@ const userArts = async (req, res) => {
       .populate("theme")
       .skip((page - 1) * limit)
       .limit(limit);
+
+    res.set('Content-Type', 'application/json');
     return res.status(200).json({
       status: "success",
       message: "Arts fetched successfully.",
@@ -127,6 +132,8 @@ const themeArts = async (req, res) => {
     const arts = await Art.find({ theme: theme._id })
       .skip((page - 1) * limit)
       .limit(limit);
+
+    res.set('Content-Type', 'application/json');
     return res.status(200).json({
       status: "success",
       message: "Arts fetched successfully.",
@@ -160,6 +167,8 @@ const show = async (req, res) => {
         message: "Art not found.",
       });
     }
+
+    res.set('Content-Type', 'application/json');
     return res.status(200).json({
       status: "success",
       message: "Art fetched successfully.",
@@ -197,6 +206,7 @@ const like = async (req, res) => {
       art.likedBy = art.likedBy.filter(id => id.toString() !== userId);
       art.likes = art.likedBy.length;
       await art.save();
+      res.set('Content-Type', 'application/json');
       res.status(200).send({
         message: 'Art unliked successfully',
           likes: art.likes,
@@ -205,6 +215,7 @@ const like = async (req, res) => {
       art.likedBy.push(userId);
       art.likes = art.likedBy.length;
       await art.save();
+      res.set('Content-Type', 'application/json');
       res.status(200).send({
         message: 'Art liked successfully',
         likes: art.likes,
@@ -219,19 +230,39 @@ const like = async (req, res) => {
   }
 };
 
+const convertBase64ToBuffer = (base64String) => {
+  // Remove data:image/jpeg;base64, if present
+  const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
+  return Buffer.from(base64Data, 'base64');
+};
+
 const model = async (req, res) => {
   try {
-    if (!req.files || !Object.hasOwn(req.files, "content_image") || !Object.hasOwn(req.files, "style_image")) {
+    const contentImage = req.files?.content_image?.[0] || req.body.content_image;
+    const styleImage = req.files?.style_image?.[0] || req.body.style_image;
+
+    if (!contentImage || !styleImage) {
       return res.status(400).json({
         status: "error",
-        message: "Image is required.",
+        message: "Both content and style images are required.",
       });
     }
 
-    const styled_image = await stylizeImages(req.files["content_image"][0], req.files["style_image"][0]);
+    const contentBuffer = contentImage.buffer || convertBase64ToBuffer(contentImage);
+    const styleBuffer = styleImage.buffer || convertBase64ToBuffer(styleImage);
 
-    res.set('Content-Type', 'image/jpeg');
-    res.status(201).send(styled_image);
+    const contentImageObj = { buffer: contentBuffer };
+    const styleImageObj = { buffer: styleBuffer };
+
+    const styled_image = await stylizeImages(contentImageObj, styleImageObj);
+    const base64Image = `data:image/jpeg;base64,${styled_image.toString('base64')}`;
+
+    res.set('Content-Type', 'application/json');
+    return res.status(201).json({
+      status: "success",
+      message: "Image styled successfully",
+      image: base64Image
+    });
 
   } catch (e) {
     console.log(e);
@@ -245,65 +276,70 @@ const model = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    let { title, description, theme } = await req.body;
+    let { title, description, theme, image } = req.body;
+    
     if (!theme) {
       return res.status(400).json({
         status: "error",
         message: "Theme is required.",
       });
     }
-    if (!req.file) {
+    
+    if (!image) {
       return res.status(400).json({
         status: "error",
-        message: "Image is required.",
+        message: "Image (base64) is required.",
       });
     }
+    
     if (!title || !description) {
       return res.status(400).json({
         status: "error",
         message: "Title and Description are required.",
       });
     }
-    theme = await Theme.findOne({ slug: theme });
-    if (!theme) {
-      return res.status(404).json({
-        status: "error",
-        message: "Theme not found.",
+
+    // Find or create theme
+    let themeDoc = await Theme.findOne({ slug: slugify(theme) });
+    if (!themeDoc) {
+      themeDoc = await Theme.create({
+        name: theme,
+        slug: slugify(theme),
+        description: `User defined theme: ${theme}`,
+        createdBy: req.user.id
       });
     }
+
     let slug = slugify(title);
     let i = 0;
     while (await Art.findOne({ slug: slug })) {
       slug = slugify(title, ++i);
     }
 
-    let image = "";
-    if (req.file) {
-      let oldFilename = req.file.filename;
-      let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
-      image = slug + "." + extension;
-      fs.rename(
-        req.file.path,
-        req.file.destination + "/" + image,
-        function (err) {
-          if (err) {
-            throw new Error("Error renaming file. Error: " + err);
-          }
-        }
-      );
-      image = "/images/arts/" + theme.slug + "/" + image;
+    // Ensure directory exists
+    const uploadDir = path.join('public/images/arts', themeDoc.slug);
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    theme = theme.id;
-    const artist = req.user.id;
+    // Save base64 image
+    const filename = `${slug}.jpg`;
+    const filePath = path.join(uploadDir, filename);
+    
+    // Convert base64 to buffer and save
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+    
+    // Create database entry
     const art = await Art.create({
       title,
       description,
-      theme,
-      image,
-      artist,
+      theme: themeDoc.id,
+      image: `/images/arts/${themeDoc.slug}/${filename}`,
+      artist: req.user.id,
       slug,
     });
+
     return res.status(201).json({
       status: "success",
       message: "Art created successfully.",
@@ -311,7 +347,6 @@ const create = async (req, res) => {
     });
   } catch (e) {
     console.log(e);
-
     return res.status(500).json({
       status: "error",
       message: "Something went wrong.",
@@ -351,6 +386,8 @@ const edit = async (req, res) => {
     art.title = title;
     art.description = description;
     await art.save();
+
+    res.set('Content-Type', 'application/json');
     return res.status(200).json({
       status: "success",
       message: "Art updated successfully.",
@@ -388,6 +425,7 @@ const remove = async (req, res) => {
     }
     await Art.findOneAndDelete({ slug });
 
+    res.set('Content-Type', 'application/json');
     return res.status(200).json({
       status: "success",
       message: "Art removed successfully.",
@@ -426,6 +464,7 @@ const publish = async (req, res) => {
     art.published = !art.published;
     await art.save();
 
+    res.set('Content-Type', 'application/json');
     return res.status(200).json({
       status: "success",
       message: "Art published/unpublished successfully.",

@@ -4,15 +4,38 @@ if (process.env.NODE_ENV !== "production") {
 const express = require("express");
 const routes = require("./routes/routes");
 const mongoose = require("mongoose");
+const cors = require('cors');
+const multer = require('multer');
 
 const port = 8000;
 const app = express();
-app.use(express.urlencoded({ extended: false }));
+app.use(cors({
+  origin: "*",
+  credentials: true
+}));
+
+app.use(express.json({limit: '150mb'}));
+app.use(express.urlencoded({limit: '150mb'}));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Increase the request size limit for multer
+const upload = multer({ limits: { fileSize: 150 * 1024 * 1024 } });
 //static serves
 app.use("/images", express.static(process.cwd() + "/public/uploads"));
 app.use("/default", express.static(process.cwd() + "/public/placeholders"));
 
+const testCORS = async () => {
+  try {
+    const response = await fetch('http://localhost:8000/test-cors', {
+      credentials: 'include'
+    });
+    const data = await response.json();
+    console.log(data);
+  } catch (error) {
+    console.error('CORS Error:', error);
+  }
+}
 // Database connection
 mongoose
   .connect(process.env.DATABASE)
