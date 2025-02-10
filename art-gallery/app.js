@@ -6,6 +6,7 @@ const routes = require("./routes/routes");
 const mongoose = require("mongoose");
 const cors = require('cors');
 const multer = require('multer');
+const path=require('path');
 
 const port = 8000;
 const app = express();
@@ -22,8 +23,10 @@ app.use(express.json());
 // Increase the request size limit for multer
 const upload = multer({ limits: { fileSize: 150 * 1024 * 1024 } });
 //static serves
-app.use("/images", express.static(process.cwd() + "/public/uploads"));
-app.use("/default", express.static(process.cwd() + "/public/placeholders"));
+app.use("/default", express.static(path.join(__dirname,  "public","placeholders")));
+app.use("/images", express.static(path.join(__dirname, "public", "images")));
+app.use("/theme", express.static(path.join(__dirname, "public", "theme")));
+
 
 const testCORS = async () => {
   try {

@@ -20,6 +20,10 @@ const ThemeSchema = new Schema({
     type: String,
     required: true,
   },
+  info_link: {
+    type: String,
+    default: null
+  },
   work_title: {
     type: String,
     required: true,

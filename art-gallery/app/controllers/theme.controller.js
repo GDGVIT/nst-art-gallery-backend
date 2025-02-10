@@ -71,7 +71,7 @@ const addHistory = async (req, res) => {
               throw new Error("Error renaming file. Error: " + err);
             }
           });
-        image = "/images/theme/" + image;
+        image = "/theme/" + image;
 
       } else {
         return res.status(400).json({
@@ -145,12 +145,12 @@ const show = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const { theme_title, theme_description, work_title, work_description } = req.body;
-    let slug = slugify(name);
+    const { theme_title, theme_description, work_title, work_description, info_link } = req.body;
+    let slug = slugify(theme_title);
     let i = 0;
 
     while (await Theme.findOne({ slug: slug })) {
-      slug = slugify(name, ++i);
+      slug = slugify(theme_title, ++i);
     }
 
     if (!req.files || !Object.hasOwn(req.files, "theme_image") || !Object.hasOwn(req.files, "work_image")) {
@@ -161,12 +161,13 @@ const create = async (req, res) => {
     }
 
     let theme_images = [];
-    for (img of req.files["theme_image"]) {
+    for (let idx = 0; idx < req.files["theme_image"].length; idx++) {
+      const img = req.files["theme_image"][idx];
       let image = "";
-
-      let oldFilename = img.filename;
-      let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
-      image = slug + "." + extension;
+      let extension = img.filename.split(".").pop();
+      // Add number suffix for multiple images
+      image = `${slug}-${idx + 1}.${extension}`;
+      
       fs.rename(
         img.path,
         img.destination + "/" + image,
@@ -176,16 +177,17 @@ const create = async (req, res) => {
           }
         }
       );
-      theme_images.push("/images/theme/" + image);
+      theme_images.push("/theme/" + image);
     }
-
+    
     let work_images = [];
-    for (img of req.files["work_image"]) {
+    for (let idx = 0; idx < req.files["work_image"].length; idx++) {
+      const img = req.files["work_image"][idx];
       let image = "";
-
-      let oldFilename = img.filename;
-      let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
-      image = slug + "." + extension;
+      let extension = img.filename.split(".").pop();
+      // Add number suffix for multiple images
+      image = `${slug}-work-${idx + 1}.${extension}`;
+      
       fs.rename(
         img.path,
         img.destination + "/" + image,
@@ -195,7 +197,7 @@ const create = async (req, res) => {
           }
         }
       );
-      work_images.push("/images/theme/" + image);
+      work_images.push("/theme/" + image);
     }
 
     const theme = await Theme.create({
@@ -205,11 +207,14 @@ const create = async (req, res) => {
       theme_images,
       work_images,
       work_description,
-      work_title
+      work_title,
+      info_link: info_link || null // Add info_link with null fallback
     });
+    
     return res.status(200).json({
       status: "success",
       message: "Theme added successfully.",
+      theme: theme
     });
   } catch (e) {
     if (req.file) {
@@ -225,7 +230,7 @@ const create = async (req, res) => {
 const edit = async (req, res) => {
   try {
     const { slug } = req.params;
-    const { theme_title, theme_description, work_title, work_description } = req.body;
+    const { theme_title, theme_description, work_title, work_description, info_link } = req.body;
     let theme = await Theme.findOne({ slug });
     if (!theme) {
       return res
@@ -245,13 +250,15 @@ const edit = async (req, res) => {
     if (work_description) {
       theme.work_description = work_description;
     }
+    if (info_link !== undefined) theme.info_link = info_link; // Add info_link update
 
     if (req.files && Object.hasOwn(req.files, 'theme_image')) {
       let theme_images = [];
-      for (file of req.files["theme_image"]) {
-        let oldFilename = file.filename;
-        let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
-        let image = slug + "." + extension;
+      for (let idx = 0; idx < req.files["theme_image"].length; idx++) {
+        const file = req.files["theme_image"][idx];
+        let extension = file.filename.split(".").pop();
+        let image = `${slug}-${idx + 1}.${extension}`;
+        
         fs.rename(
           file.path,
           file.destination + "/" + image,
@@ -263,18 +270,18 @@ const edit = async (req, res) => {
             }
           }
         );
-        theme_images.push(image);
+        theme_images.push("/theme/" + image);
       }
       theme.theme_images = theme_images;
     }
 
     if (req.files && Object.hasOwn(req.files, 'work_image')) {
       let work_images = [];
-
-      for (file of req.files["work_image"]) {
-        let oldFilename = file.filename;
-        let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
-        let image = slug + "." + extension;
+      for (let idx = 0; idx < req.files["work_image"].length; idx++) {
+        const file = req.files["work_image"][idx];
+        let extension = file.filename.split(".").pop();
+        let image = `${slug}-work-${idx + 1}.${extension}`;
+        
         fs.rename(
           file.path,
           file.destination + "/" + image,
@@ -286,7 +293,7 @@ const edit = async (req, res) => {
             }
           }
         );
-        work_images.push(image);
+        work_images.push("/theme/" + image);
       }
       theme.work_images = work_images;
     }
