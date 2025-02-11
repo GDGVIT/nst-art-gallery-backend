@@ -3,49 +3,89 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-// Load content and style images (using sharp to read images).
+// Load content image with size limits
 async function loadImage(imagePath) {
   const imageBuffer = imagePath.buffer;
-  const image = await sharp(imageBuffer).removeAlpha().raw().toBuffer();
-  const width = (await sharp(imageBuffer).metadata()).width;
-  const height = (await sharp(imageBuffer).metadata()).height;
+  const metadata = await sharp(imageBuffer).metadata();
+  
+  // Limit maximum dimensions to reduce memory usage
+  const MAX_DIM = 1024;
+  let width = metadata.width;
+  let height = metadata.height;
+  
+  if (width > MAX_DIM || height > MAX_DIM) {
+    const scale = Math.min(MAX_DIM / width, MAX_DIM / height);
+    width = Math.round(width * scale);
+    height = Math.round(height * scale);
+  }
+
+  const image = await sharp(imageBuffer)
+    .resize(width, height)
+    .removeAlpha()
+    .raw()
+    .toBuffer();
+
   const imageTensor = tf.tensor3d(image, [height, width, 3]);
-  return imageTensor.div(tf.scalar(255)); // Normalize to [0, 1]
+  return imageTensor.div(tf.scalar(255));
 }
 
-// Resize style image to 256x256
+// Resize style image to smaller dimensions
 async function resizeStyleImage(imagePath) {
-  const resizedBuffer = await sharp(imagePath.buffer).removeAlpha().resize(256, 256).raw().toBuffer();
-  const styleTensor = tf.tensor3d(resizedBuffer, [256, 256, 3]);
-  return styleTensor.div(tf.scalar(255)); // Normalize to [0, 1]
+  const STYLE_DIM = 256; // Reduced from original size if it was larger
+  
+  const resizedBuffer = await sharp(imagePath.buffer)
+    .resize(STYLE_DIM, STYLE_DIM)
+    .removeAlpha()
+    .raw()
+    .toBuffer();
+
+  const styleTensor = tf.tensor3d(resizedBuffer, [STYLE_DIM, STYLE_DIM, 3]);
+  return styleTensor.div(tf.scalar(255));
 }
 
 async function stylizeImages(contentImagePath, styleImagePath) {
-  // Load content and style images
-  const contentImage = await loadImage(contentImagePath);
-  const styleImage = await resizeStyleImage(styleImagePath);
+  try {
+    // Enable memory logging
+    tf.engine().startScope();
 
-  // Load the style transfer model
-  const modelPath = path.resolve(__dirname, "./arbitrary-image-stylization-v1-tensorflow1-256-v2");
+    // Load and process images
+    const contentImage = await loadImage(contentImagePath);
+    const styleImage = await resizeStyleImage(styleImagePath);
 
-  const styleTransferModel = await tf.node.loadSavedModel(modelPath);
+    // Load model
+    const modelPath = path.resolve(__dirname, "./arbitrary-image-stylization-v1-tensorflow1-256-v2");
+    const styleTransferModel = await tf.node.loadSavedModel(modelPath);
 
-  // Stylize the image
-  let stylizedImageTensor = await styleTransferModel.predict({
-    placeholder: contentImage.expandDims(),
-    placeholder_1: styleImage.expandDims(),
-  });
+    // Process image
+    const stylizedImageTensor = await styleTransferModel.predict({
+      placeholder: contentImage.expandDims(),
+      placeholder_1: styleImage.expandDims(),
+    });
 
-  // Save the stylized image
-  stylizedImageTensor = stylizedImageTensor["output_0"];
-  const unnormal = stylizedImageTensor.mul(tf.scalar(255));
- 
-  const stylizedImageData = unnormal.dataSync();
-  const [height, width, channels] = stylizedImageTensor.shape.slice(1);
+    // Post-process result
+    const output = stylizedImageTensor["output_0"];
+    const unnormal = output.mul(tf.scalar(255));
+    const stylizedImageData = unnormal.dataSync();
+    const [height, width, channels] = output.shape.slice(1);
 
-  return await sharp(Buffer.from(stylizedImageData), {
-    raw: { width, height, channels },
-  }).toFormat('jpeg').toBuffer();
+    // Clean up tensors
+    tf.dispose([contentImage, styleImage, output, unnormal]);
+    tf.engine().endScope();
+
+    // Convert to JPEG buffer
+    return await sharp(Buffer.from(stylizedImageData), {
+      raw: { width, height, channels },
+    })
+    .jpeg({ quality: 90 })
+    .toBuffer();
+
+  } catch (error) {
+    console.error('Style transfer error:', error);
+    throw error;
+  } finally {
+    // Ensure memory cleanup
+    tf.engine().disposeVariables();
+  }
 }
 
 module.exports = stylizeImages;
