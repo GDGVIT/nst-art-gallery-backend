@@ -47,39 +47,6 @@ const addHistory = async (req, res) => {
         });
       }
 
-      const { artist, art } = req.body;
-
-      if (!artist || !art) {
-        return res.status(404).json({
-          status: "error",
-          message: "artist and art is required",
-        });
-      }
-
-      let image = "";
-
-      if (req.file) {
-        let oldFilename = req.file.filename;
-        let extension = oldFilename.split(".")[oldFilename.split(".").length - 1];
-        image = slug + "." + extension;
-
-        fs.rename(
-          req.file.path,
-          req.file.destination + "/" + image,
-          function (err) {
-            if (err) {
-              throw new Error("Error renaming file. Error: " + err);
-            }
-          });
-        image = "/theme/" + image;
-
-      } else {
-        return res.status(400).json({
-          status: "error",
-          message: "Image is required"
-        });
-      }
-
       const theme = await Theme.findOne({ slug });
       if (!theme) {
         return res.status(404).json({
@@ -88,19 +55,60 @@ const addHistory = async (req, res) => {
         });
       }
 
+      const { artist, art } = req.body;
+      if (!artist || !art) {
+        return res.status(400).json({
+          status: "error",
+          message: "artist and art is required",
+        });
+      }
+
+      let image = "";
+      let newFilename = "";
+      if (req.file) {
+        const historyCount = theme.history.length + 1;
+        console.log(historyCount);
+        let oldFilename = req.file.filename;
+        let extension = oldFilename.split(".").pop();
+        newFilename = `${slug}-h-${historyCount}.${extension}`;
+        
+        fs.rename(
+          req.file.path,
+          req.file.destination + "/" + newFilename,
+          function (err) {
+            if (err) {
+              throw new Error("Error renaming file. Error: " + err);
+            }
+          }
+        );
+        image = "/theme/" + newFilename;
+      } else {
+        return res.status(400).json({
+          status: "error",
+          message: "Image is required"
+        });
+      }
+      console.log(image);
       const historyEntry = {
         src: image,
         artist: JSON.parse(artist),
-        art: JSON.parse(art),
+        art: JSON.parse(art)
       };
-      console.log(historyEntry);
 
       theme.history.push(historyEntry);
       await theme.save();
 
-      return res.status(201).json(theme);
+      return res.status(200).json({
+        status: "success",
+        message: "History added successfully",
+        theme,
+        filename: newFilename
+      });
     } catch (e) {
-      console.log(e)
+      console.log(e);
+      if (req.file) {
+        fs.existsSync(req.file.path) && deleteFile(req.file.path);
+      }
       return res.status(500).json({
         status: "error",
         message: "Something went wrong.",

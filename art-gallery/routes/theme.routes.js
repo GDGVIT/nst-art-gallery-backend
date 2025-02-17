@@ -43,9 +43,9 @@ router.put(
 
 router.put(
   "/:slug/add-history",
-  //verify,
+  verify,
   setPath,
-  uploader.single("history_image"),
+  uploader.single("history_image"), // Changed back to "history_image"
   convertToWebP,
   addHistory
 );
