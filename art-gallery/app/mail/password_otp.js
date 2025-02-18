@@ -2,11 +2,10 @@ const mailSender = require("../controllers/mail.controller");
 
 const sendPasswordOTP = async (to, otp) => {
   html = `<center>
-    <img src="https://userrounakk.com/event-yatra.png" alt="logo" />
       <div class="card" style="background-color: white">
         <h1>Reset Password</h1>
         <p>
-          It seems you are trying to reset your password.
+          It seems you are trying to reset your password at Artium.
         </p>
         <p>
           Here is the verification code. Please use it to set a new password.
