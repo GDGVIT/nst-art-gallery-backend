@@ -2,11 +2,10 @@ const mailSender = require("../controllers/mail.controller");
 
 const sendOTP = async (to, otp) => {
   html = `<center>
-    <img src="https://userrounakk.com/event-yatra.png" alt="logo" />
       <div class="card" style="background-color: white">
         <h1>Email Verification</h1>
         <p>
-          It seems you are registering at Art Gallery and trying to verify your
+          It seems you are registering at Artium and trying to verify your
           email.
         </p>
         <p>
