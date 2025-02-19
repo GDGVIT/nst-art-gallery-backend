@@ -67,8 +67,6 @@ const gallery = async (req, res) => {
 };
 
 const userArts = async (req, res) => {
-  console.log("hi");
-
   try {
     let { page, limit } = req.query;
     const { id } = req.params;
