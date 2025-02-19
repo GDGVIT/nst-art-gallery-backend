@@ -45,7 +45,6 @@ const gallery = async (req, res) => {
 
     const arts = await Art.find({ published: true, reviewed: true })
       .populate({ path: "artist", select: "id name" })
-      .populate("theme")
       .skip((page - 1) * limit)
       .limit(limit);
 
@@ -88,7 +87,6 @@ const userArts = async (req, res) => {
     const count = await Art.countDocuments({ artist: id });
     const arts = await Art.find({ artist: id })
       .populate({ path: "artist", select: "id name" })
-      .populate("theme")
       .skip((page - 1) * limit)
       .limit(limit);
 
