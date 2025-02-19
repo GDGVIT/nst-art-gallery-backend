@@ -43,7 +43,7 @@ const gallery = async (req, res) => {
     limit = limit || 10;
     const count = await Art.countDocuments();
 
-    const arts = await Art.find({published: true})
+    const arts = await Art.find({ published: true, reviewed: true })
       .populate({ path: "artist", select: "id name" })
       .populate("theme")
       .skip((page - 1) * limit)
@@ -438,6 +438,39 @@ const remove = async (req, res) => {
   }
 };
 
+const review = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    if (!slug) {
+      return res.status(400).json({
+        status: "error",
+        message: "Slug is required.",
+      });
+    }
+    const art = await Art.findOne({ slug });
+    if (!art) {
+      return res.status(404).json({
+        status: "error",
+        message: "Art not found.",
+      });
+    }
+
+    art.reviewed = !art.reviewed;
+    await art.save();
+
+    res.set('Content-Type', 'application/json');
+    return res.status(200).json({
+      status: "success",
+      message: "Art reviewed successfully.",
+    });
+  } catch (e) {
+    return res.status(500).json({
+      status: "error",
+      message: "Something went wrong.",
+    });
+  }
+};
+
 const publish = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -487,6 +520,7 @@ module.exports = {
   remove,
   like,
   publish,
+  review,
   gallery,
   model,
 };
