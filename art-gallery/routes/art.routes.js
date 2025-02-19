@@ -13,10 +13,12 @@ const {
   like,
   remove,
   publish,
+  review,
   gallery,
   model,
 } = require("../app/controllers/art.controller");
 const convertToWebP = require("../app/middlewares/converter.middleware");
+const { verify } = require("../app/middlewares/theme.middleware");
 
 router.get("/user/:id", userArts);
 router.post(
@@ -45,6 +47,7 @@ router.post(
 
 router.post("/like/:slug", getUser, like);
 router.post("/publish/:slug", getUser, publish);
+router.post("/review/:slug", verify, review);
 
 router.get("/", index);
 router.get("/gallery", gallery);
