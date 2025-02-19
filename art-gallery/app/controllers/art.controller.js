@@ -41,7 +41,7 @@ const gallery = async (req, res) => {
     let { page, limit } = req.query;
     page = page || 1;
     limit = limit || 10;
-    const count = await Art.countDocuments();
+    const count = await Art.countDocuments({ published: true, reviewed: true });
 
     const arts = await Art.find({ published: true, reviewed: true })
       .populate({ path: "artist", select: "id name" })
