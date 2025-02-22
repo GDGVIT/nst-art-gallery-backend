@@ -41,11 +41,10 @@ const gallery = async (req, res) => {
     let { page, limit } = req.query;
     page = page || 1;
     limit = limit || 10;
-    const count = await Art.countDocuments();
+    const count = await Art.countDocuments({ published: true, reviewed: true });
 
     const arts = await Art.find({ published: true, reviewed: true })
       .populate({ path: "artist", select: "id name" })
-      .populate("theme")
       .skip((page - 1) * limit)
       .limit(limit);
 
@@ -67,8 +66,6 @@ const gallery = async (req, res) => {
 };
 
 const userArts = async (req, res) => {
-  console.log("hi");
-
   try {
     let { page, limit } = req.query;
     const { id } = req.params;
@@ -90,7 +87,6 @@ const userArts = async (req, res) => {
     const count = await Art.countDocuments({ artist: id });
     const arts = await Art.find({ artist: id })
       .populate({ path: "artist", select: "id name" })
-      .populate("theme")
       .skip((page - 1) * limit)
       .limit(limit);
 
@@ -423,6 +419,10 @@ const remove = async (req, res) => {
         message: "You are not authorized to perform this action.",
       });
     }
+
+    const filePath = path.join('public', art.image);
+    fs.unlinkSync(filePath);
+
     await Art.findOneAndDelete({ slug });
 
     res.set('Content-Type', 'application/json');
