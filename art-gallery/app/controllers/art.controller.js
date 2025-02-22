@@ -419,6 +419,10 @@ const remove = async (req, res) => {
         message: "You are not authorized to perform this action.",
       });
     }
+
+    const filePath = path.join('public', art.image);
+    fs.unlinkSync(filePath);
+
     await Art.findOneAndDelete({ slug });
 
     res.set('Content-Type', 'application/json');
