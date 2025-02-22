@@ -2,8 +2,10 @@
 <a href="https://dscvit.com">
 	<img width="400" src="https://user-images.githubusercontent.com/56252312/159312411-58410727-3933-4224-b43e-4e9b627838a3.png#gh-light-mode-only" alt="GDSC VIT"/>
 </a>
-	<h2 align="center"> < Insert Project Title Here > </h2>
-	<h4 align="center"> < Insert Project Description Here > <h4>
+	<h2 align="center">  </h2>
+    <a href="https://dscvit-artium.vercel.app">
+        <img width="400" src="https://github.com/GDGVIT/artium-frontend/blob/dev/nst-fe/src/assets/Artium_logo.svg" alt="Artium logo">
+    </a>
 </p>
 
 ---
@@ -15,46 +17,45 @@
 
 
 ## Features
-- [ ]  < feature >
-- [ ]  < feature >
-- [ ]  < feature >
-- [ ]  < feature >
+- [X] Landing Page/Carousel
+- [X] Authentication
+- [X] Creating Custom Art
+- [X] Theme Of The Day
+- [X] Public Gallery
+- [X] Profile with personal image gallery
+- [X] About us page 
 
 <br>
 
-## Dependencies
- - < dependency >
- - < dependency >
-
-
-## Running
-
-
-< directions to install > 
-```bash
-< insert code >
-```
-
-< directions to execute >
-
-```bash
-< insert code >
-```
 
 ## Contributors
 
 <table>
 	<tr align="center">
 		<td>
-		John Doe
+		Rounak Agrawal
 		<p align="center">
-			<img src = "https://dscvit.com/images/dsc-logo-square.svg" width="150" height="150" alt="Your Name Here (Insert Your Image Link In Src">
+			<img src = "https://avatars.githubusercontent.com/u/74702699?v=4" width="150" height="150">
 		</p>
 			<p align="center">
-				<a href = "https://github.com/person1">
+				<a href = "https://github.com/userrounakk">
 					<img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36" alt="GitHub"/>
 				</a>
-				<a href = "https://www.linkedin.com/in/person1">
+				<a href = "https://www.linkedin.com/in/userrounakk/">
+					<img src = "http://www.iconninja.com/files/863/607/751/network-linkedin-social-connection-circular-circle-media-icon.svg" width="36" height="36" alt="LinkedIn"/>
+				</a>
+			</p>
+		</td>
+		<td>
+		Kurian Jojo
+		<p align="center">
+			<img src = "https://github.com/user-attachments/assets/2c500751-9c0a-4c50-95bf-292c39a56b3e" width="150" height="150">
+		</p>
+			<p align="center">
+				<a href = "https://github.com/polyesterswing">
+					<img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36" alt="GitHub"/>
+				</a>
+				<a href = "https://linkedin.com/in/kurian-jojo-544a54215/">
 					<img src = "http://www.iconninja.com/files/863/607/751/network-linkedin-social-connection-circular-circle-media-icon.svg" width="36" height="36" alt="LinkedIn"/>
 				</a>
 			</p>
